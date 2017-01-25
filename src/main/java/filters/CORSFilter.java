@@ -13,7 +13,7 @@ public class CORSFilter  implements Filter {
             result = filterChain.next(context);
         }
         result = filterChain.next(context);
-        result.addHeader("Access-Control-Allow-Origin", "*");
+        result.addHeader("Access-Control-Allow-Origin", "http://localhost:8080");
         result.addHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
         result.addHeader("Access-Control-Max-Age", "0");
         result.addHeader("Access-Control-Allow-Headers", "Content-type, X-Foo-for-demo-only");

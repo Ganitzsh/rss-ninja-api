@@ -32,7 +32,6 @@ import java.util.Iterator;
 import java.util.List;
 
 @Singleton
-@FilterWith(CORSFilter.class)
 public class UserController {
     @Inject
     Provider<EntityManager> entitiyManagerProvider;

@@ -17,14 +17,11 @@
 package controllers;
 
 import com.google.inject.Singleton;
-import filters.CORSFilter;
 import models.User;
 import models.User_;
 import ninja.*;
 import ninja.cache.NinjaCache;
-import ninja.exceptions.BadRequestException;
 import ninja.jpa.UnitOfWork;
-import ninja.params.Param;
 import ninja.session.Session;
 import ninja.validation.FieldViolation;
 import ninja.validation.JSR303Validation;
@@ -36,7 +33,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -45,7 +41,6 @@ import java.util.Iterator;
 
 
 @Singleton
-@FilterWith(CORSFilter.class)
 public class AuthController {
 
     @Inject
@@ -55,7 +50,6 @@ public class AuthController {
 
     @UnitOfWork
     public Result signup(Context context, Session session, @JSR303Validation User u, Validation validation) {
-
         if (validation.hasBeanViolations()) {
             ArrayList map = new ArrayList();
             for (Iterator<FieldViolation> i = validation.getBeanViolations().listIterator(); i.hasNext();) {
@@ -82,18 +76,16 @@ public class AuthController {
     }
 
     @UnitOfWork
-    public Result login(Context context, Session session, @Param("email") String email, @Param("password") String password) {
+    public Result login(Context context, Session session, User req) {
         EntityManager entitymanager = entitiyManagerProvider.get();
         CriteriaBuilder cb = entitymanager.getCriteriaBuilder();
-
         try {
             CriteriaQuery<User> query = cb.createQuery(User.class);
             Root<User> a = query.from(User.class);
             query.where(
-                    cb.equal(a.get(User_.email), email),
-                    cb.equal(a.get(User_.password), password)
+                    cb.equal(a.get(User_.email), req.getEmail()),
+                    cb.equal(a.get(User_.password), req.getPassword())
             );
-            System.out.println(email + " " + password);
             User u = entitymanager.createQuery(query).getSingleResult();
             String token = SessionIdentifierGenerator.nextSessionId();
             context.addCookie(Cookie.builder("token", token).build());
@@ -102,13 +94,15 @@ public class AuthController {
             session.put("id", String.valueOf(u.getId()));
             ninjaCache.set(token, u.getId());
             return Results.json().render(new RespAuth(u.getId(), token));
-        } catch (NoResultException e) {
-            return Results.noContent().status(404);
+        } catch (Exception e) {
+            return Results.json().render(e);
         }
     }
 
+
     @UnitOfWork
     public Result logout(Context context, Session session) {
+        System.out.println("Lol");
         Cookie c = context.getCookie("token");
         ninjaCache.delete(c.getValue());
         session.clear();

@@ -1,7 +1,27 @@
 package controllers;
 
-/**
- * Created by ganitzsh on 1/25/17.
- */
 public class ReqLogin {
+    private String email;
+    private String password;
+
+    public ReqLogin(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
