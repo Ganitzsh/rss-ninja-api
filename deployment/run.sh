@@ -4,7 +4,7 @@ if [ ! -d "data" ]; then
 fi
 (docker-compose stop ; docker-compose up -d)
 if [ $? -eq 0 ]; then
-    echo "API Running on port 4141"
+    echo "API Running on port 4242"
     echo "Postgres database available on port 5431"
 else
     echo "An error occured"
