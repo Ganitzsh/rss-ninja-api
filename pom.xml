@@ -4,10 +4,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>rssagg</artifactId>
-    <!-- If you want to deploy to a war please -->
-    <!-- replace "jar" with "war" and -->
-    <!-- comment ninja-standalone dependency and  -->
-    <!-- uncomment the dependency for ninja-servlet -->
     <packaging>jar</packaging>
     <groupId>rssagg</groupId>
     <version>0.1</version>
@@ -82,9 +78,6 @@
                     </systemProperties>
                 </configuration>
             </plugin>
-            <!-- Allows you to run Ninja via the SuperDevMode. -->
-            <!-- run "mvn ninja:run" on the command line for the best -->
-            <!-- development experience. -->
             <plugin>
                 <groupId>org.ninjaframework</groupId>
                 <artifactId>ninja-maven-plugin</artifactId>
@@ -186,16 +179,21 @@
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>5.2.6.Final</version>
         </dependency>
-        <!-- If you want to deploy to a war please -->
-        <!-- comment ninja-standalone dependency and  -->
-        <!-- uncomment the dependency for ninja-servlet -->
-        <!--
         <dependency>
-            <groupId>org.ninjaframework</groupId>
-            <artifactId>ninja-servlet</artifactId>
-            <version>${ninja.version}</version>
+            <groupId>com.rometools</groupId>
+            <artifactId>rome</artifactId>
+            <version>1.7.1</version>
         </dependency>
-        -->
+        <dependency>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom2</artifactId>
+            <version>2.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20160810</version>
+        </dependency>
         <dependency>
             <groupId>org.ninjaframework</groupId>
             <artifactId>ninja-standalone</artifactId>

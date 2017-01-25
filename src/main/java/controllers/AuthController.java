@@ -32,6 +32,7 @@ import ninja.validation.FieldViolation;
 import ninja.validation.JSR303Validation;
 import ninja.validation.Validation;
 import tools.SessionIdentifierGenerator;
+import tools.TokenAuthority;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -116,7 +117,10 @@ public class AuthController {
 
     @UnitOfWork
     public Result ping(Context context, Session session) {
-        return Results.json().render(String.join(",", session.getData().values()));
+        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
+            return Results.json().status(401);
+        }
+        return Results.status(200);
     }
 
     public class RespAuth {
