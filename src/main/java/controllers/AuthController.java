@@ -103,7 +103,7 @@ public class AuthController {
             ninjaCache.set(token, u.getId());
             return Results.json().render(new RespAuth(u.getId(), token));
         } catch (NoResultException e) {
-            return Results.json().status(401);
+            throw new BadRequestException(e);
         }
     }
 
@@ -112,7 +112,7 @@ public class AuthController {
         Cookie c = context.getCookie("token");
         ninjaCache.delete(c.getValue());
         session.clear();
-        return Results.status(200);
+        return Results.noContent().status(200);
     }
 
     @UnitOfWork
@@ -120,7 +120,7 @@ public class AuthController {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
             return Results.json().status(401);
         }
-        return Results.status(200);
+        return Results.noContent().status(200);
     }
 
     public class RespAuth {

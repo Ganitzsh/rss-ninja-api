@@ -1,6 +1,7 @@
 package rss;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -12,8 +13,10 @@ public class Item implements Serializable {
     private String title;
     private String author;
     @JsonFormat(shape= JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm a z")
+    @JsonProperty("date_published")
     private Date publishedDate;
     @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm a z")
+    @JsonProperty("date_updated")
     private Date updatedDate;
     private String description;
     private String id;

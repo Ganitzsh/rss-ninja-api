@@ -1,6 +1,7 @@
 package rss;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -16,7 +17,8 @@ public class Feed implements Serializable {
     private String title;
     private String id;
     @JsonFormat(shape= JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm a z")
-    private Date published;
+    @JsonProperty("date_published")
+    private Date publishedDate;
     private String type;
     private String copyright;
     private String docs;
@@ -52,11 +54,11 @@ public class Feed implements Serializable {
 
     public Date getPublished() {
 
-        return published;
+        return publishedDate;
     }
 
     public void setPublished(Date published) {
-        this.published = published;
+        this.publishedDate = published;
     }
 
     public String getCopyright() {

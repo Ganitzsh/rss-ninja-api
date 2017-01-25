@@ -41,7 +41,7 @@ public class UserController {
     @UnitOfWork
     public Result update(Context context, Session session, User updatedUser) {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.json().status(401).render(context.getCookieValue("token"));
+            return Results.noContent().status(401).render(context.getCookieValue("token"));
         }
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
@@ -64,7 +64,7 @@ public class UserController {
     @UnitOfWork
     public Result addFeed(Context context, Session session, RSSFeed feed) {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.json().status(401);
+            return Results.noContent().status(401);
         }
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
@@ -79,7 +79,7 @@ public class UserController {
     @UnitOfWork
     public Result getAllFeed(Context context, Session session) {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.json().status(401);
+            return Results.noContent().status(401);
         }
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
@@ -93,7 +93,7 @@ public class UserController {
     @UnitOfWork
     public Result getOneFeed(Context context, Session session, @PathParam("id") Long fId) {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.json().status(401);
+            return Results.noContent().status(401);
         }
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
@@ -107,6 +107,9 @@ public class UserController {
             URL url = new URL(selection.getUrl());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
+            if (conn.getResponseCode() != 200) {
+                return Results.noContent().status(conn.getResponseCode());
+            }
             BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String line;
             while ((line = rd.readLine()) != null) {
@@ -209,19 +212,19 @@ public class UserController {
     @UnitOfWork
     public Result deleteFeed(Context context, Session session, @PathParam("id") Long fId) {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.json().status(401);
+            return Results.noContent().status(401);
         }
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
 
         RSSFeed feed = em.find(RSSFeed.class, fId);
         if (feed == null) {
-            return Results.status(400);
+            return Results.noContent().status(400);
         }
         em.getTransaction().begin();
         em.remove(feed);
         em.getTransaction().commit();
-        return Results.status(200);
+        return Results.noContent().status(200);
     }
 
 }
