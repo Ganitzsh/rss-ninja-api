@@ -102,7 +102,6 @@ public class AuthController {
 
     @UnitOfWork
     public Result logout(Context context, Session session) {
-        System.out.println("Lol");
         Cookie c = context.getCookie("token");
         ninjaCache.delete(c.getValue());
         session.clear();
