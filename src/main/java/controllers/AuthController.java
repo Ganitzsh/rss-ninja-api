@@ -77,7 +77,7 @@ public class AuthController {
             session.put("id", String.valueOf(u.getId()));
             return Results.json().render(new RespAuth(u.getId(), token));
         } catch (Exception e) {
-            throw new BadRequestException(e);
+            return Results.json().status(400).render(e);
         }
     }
 
