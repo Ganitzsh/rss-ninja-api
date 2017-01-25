@@ -3,6 +3,8 @@ package controllers;
 import com.google.inject.Singleton;
 import com.rometools.rome.feed.synd.*;
 import com.rometools.rome.io.SyndFeedInput;
+import filters.CORSFilter;
+import ninja.FilterWith;
 import rss.Author;
 import rss.Content;
 import rss.Feed;
@@ -25,12 +27,12 @@ import javax.persistence.EntityManager;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 @Singleton
+@FilterWith(CORSFilter.class)
 public class UserController {
     @Inject
     Provider<EntityManager> entitiyManagerProvider;

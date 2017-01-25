@@ -17,12 +17,10 @@
 package controllers;
 
 import com.google.inject.Singleton;
+import filters.CORSFilter;
 import models.User;
 import models.User_;
-import ninja.Context;
-import ninja.Cookie;
-import ninja.Result;
-import ninja.Results;
+import ninja.*;
 import ninja.cache.NinjaCache;
 import ninja.exceptions.BadRequestException;
 import ninja.jpa.UnitOfWork;
@@ -47,6 +45,7 @@ import java.util.Iterator;
 
 
 @Singleton
+@FilterWith(CORSFilter.class)
 public class AuthController {
 
     @Inject
@@ -94,6 +93,7 @@ public class AuthController {
                     cb.equal(a.get(User_.email), email),
                     cb.equal(a.get(User_.password), password)
             );
+            System.out.println(email + " " + password);
             User u = entitymanager.createQuery(query).getSingleResult();
             String token = SessionIdentifierGenerator.nextSessionId();
             context.addCookie(Cookie.builder("token", token).build());
@@ -103,7 +103,7 @@ public class AuthController {
             ninjaCache.set(token, u.getId());
             return Results.json().render(new RespAuth(u.getId(), token));
         } catch (NoResultException e) {
-            throw new BadRequestException(e);
+            return Results.noContent().status(404);
         }
     }
 
