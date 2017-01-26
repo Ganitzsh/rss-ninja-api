@@ -3,6 +3,7 @@ package controllers;
 import com.google.inject.Singleton;
 import com.rometools.rome.feed.synd.*;
 import com.rometools.rome.io.SyndFeedInput;
+import filters.AddCORS;
 import filters.CORSFilter;
 import ninja.FilterWith;
 import rss.Author;
@@ -28,10 +29,12 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
 @Singleton
+@FilterWith(AddCORS.class)
 public class UserController {
     @Inject
     Provider<EntityManager> entitiyManagerProvider;
@@ -104,6 +107,23 @@ public class UserController {
             return Results.status(400);
         }
         try {
+            Feed feed;
+
+            String state = (String) ninjaCache.get("feed:" + selection.getUrl() + ":state");
+            if (state != null) {
+                if (state.equals("in_progress")) {
+                    return Results.noContent().status(429);
+                }
+                if ((feed = (Feed) ninjaCache.get("feed:" + selection.getUrl())) != null) {
+                    long seconds = (new Date().getTime()-feed.getCachedDate().getTime())/1000;
+                    System.out.println("Time till last caching: " + seconds);
+                    if (seconds < 60) {
+                        return Results.json().render(feed);
+                    }
+                }
+            }
+            ninjaCache.set("feed:" + selection.getUrl() + ":state", "in_progress");
+            feed = new Feed();
             StringBuilder result = new StringBuilder();
             URL url = new URL(selection.getUrl());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -124,7 +144,6 @@ public class UserController {
 
             List<SyndEntry> entries = f.getEntries();
             Iterator<SyndEntry> it = entries.iterator();
-            Feed feed = new Feed();
             feed.setUri(f.getUri());
             feed.setCopyright(f.getCopyright());
             feed.setDocs(f.getDocs());
@@ -203,9 +222,14 @@ public class UserController {
                 }
                 feed.getItems().add(item);
             }
+            feed.setCachedDate(new Date());
+            ninjaCache.set("feed:" + selection.getUrl(), feed);
+            ninjaCache.set("feed:" + selection.getUrl() + ":state", "done");
             return Results.json().render(feed);
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
+            ninjaCache.set("feed:" + selection.getUrl() + ":state", "error");
+            ninjaCache.set("feed:" + selection.getUrl() + ":exception", e);
             return Results.json().status(400).render(e);
         }
     }

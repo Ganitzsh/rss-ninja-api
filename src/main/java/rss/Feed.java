@@ -19,6 +19,7 @@ public class Feed implements Serializable {
     @JsonFormat(shape= JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm a z")
     @JsonProperty("date_published")
     private Date publishedDate;
+    private Date cachedDate;
     private String type;
     private String copyright;
     private String docs;
@@ -27,6 +28,22 @@ public class Feed implements Serializable {
     private String uri;
     private String generator;
     private String author;
+
+    public Date getCachedDate() {
+        return cachedDate;
+    }
+
+    public void setCachedDate(Date cachedDate) {
+        this.cachedDate = cachedDate;
+    }
+
+    public Date getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(Date publishedDate) {
+        this.publishedDate = publishedDate;
+    }
 
     public List<String> getCategories() {
         return categories;
