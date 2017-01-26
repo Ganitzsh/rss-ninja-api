@@ -17,6 +17,8 @@
 package controllers;
 
 import com.google.inject.Singleton;
+import filters.AddCORS;
+import filters.CORSFilter;
 import models.User;
 import models.User_;
 import ninja.*;
@@ -41,6 +43,7 @@ import java.util.Iterator;
 
 
 @Singleton
+@FilterWith(AddCORS.class)
 public class AuthController {
 
     @Inject
@@ -57,6 +60,9 @@ public class AuthController {
                 map.add(elem.field + " " + elem.constraintViolation.getMessageKey());
             }
             return Results.json().status(400).render(map);
+        }
+        if (u == null) {
+            return Results.json().status(400).render("No user specified");
         }
         try {
             EntityManager entitymanager = entitiyManagerProvider.get();
@@ -79,6 +85,9 @@ public class AuthController {
     public Result login(Context context, Session session, User req) {
         EntityManager entitymanager = entitiyManagerProvider.get();
         CriteriaBuilder cb = entitymanager.getCriteriaBuilder();
+        if (req == null || req.getEmail() == null || req.getPassword() == null) {
+            return Results.json().render("Req is null");
+        }
         try {
             CriteriaQuery<User> query = cb.createQuery(User.class);
             Root<User> a = query.from(User.class);
@@ -103,13 +112,16 @@ public class AuthController {
     @UnitOfWork
     public Result logout(Context context, Session session) {
         Cookie c = context.getCookie("token");
-        ninjaCache.delete(c.getValue());
+        if (c != null) {
+            ninjaCache.delete(c.getValue());
+        }
         session.clear();
         return Results.noContent().status(200);
     }
 
     @UnitOfWork
     public Result ping(Context context, Session session) {
+        System.out.println(context.getCookieValue("token"));
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
             return Results.json().status(401);
         }

@@ -8,15 +8,18 @@ public class CORSFilter  implements Filter {
         Result result;
 
         if( context.getMethod().equalsIgnoreCase("OPTIONS") ) {
-            result = Results.json();
+            result = Results.text();
         } else {
             result = filterChain.next(context);
         }
         result = filterChain.next(context);
-        result.addHeader("Access-Control-Allow-Origin", "http://localhost:8080");
-        result.addHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-        result.addHeader("Access-Control-Max-Age", "0");
-        result.addHeader("Access-Control-Allow-Headers", "Content-type, X-Foo-for-demo-only");
+        result.addHeader("Access-Control-Allow-Credentials", "true");
+        result.addHeader("Access-Control-Allow-Origin", context.getHeader("Origin"));
+        result.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, PATCH, OPTIONS");
+        result.addHeader("Access-Control-Max-Age", "50");
+        result.addHeader("Access-Control-Allow-Headers", "Origin, Authorization, Cookie, Accept, Content-Type, X-Requested-With, Key");
+        result.addHeader("Cache-Control", "");
+        result.addHeader("Vary", "Origin");
         return result;
     }
 }
