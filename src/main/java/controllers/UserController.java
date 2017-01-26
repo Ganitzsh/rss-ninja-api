@@ -250,7 +250,7 @@ public class UserController {
         em.getTransaction().begin();
         em.remove(feed);
         em.getTransaction().commit();
-        return Results.noContent().status(200);
+        return this.getAllFeed(context, session);
     }
 
 }
