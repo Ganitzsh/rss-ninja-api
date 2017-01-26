@@ -127,6 +127,7 @@ public class UserController {
             StringBuilder result = new StringBuilder();
             URL url = new URL(selection.getUrl());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("User-Agent", "RSS Agg 0.2");
             conn.setRequestMethod("GET");
             if (conn.getResponseCode() != 200) {
                 return Results.noContent().status(conn.getResponseCode());
