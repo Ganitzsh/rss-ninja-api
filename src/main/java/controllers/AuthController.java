@@ -104,7 +104,7 @@ public class AuthController {
             ninjaCache.set(token, u.getId());
             return Results.json().render(new RespAuth(u.getId(), token));
         } catch (Exception e) {
-            return Results.json().render(e);
+            return Results.json().status(400).render(e);
         }
     }
 
