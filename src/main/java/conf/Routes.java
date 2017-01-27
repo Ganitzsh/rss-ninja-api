@@ -31,6 +31,7 @@ public class Routes implements ApplicationRoutes {
 
         router.OPTIONS().route("/.*").with(AppController.class, "cors");
         router.GET().route("/assets/{fileName: .*}").with(AssetsController.class, "serveStatic");
+        router.GET().route("/favicon.ico").with(AssetsController.class, "serveStatic");
         router.GET().route("/").with(AppController.class, "index");
 
         router.POST().route("/auth/signup").with(AuthController.class, "signup");

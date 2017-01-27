@@ -11,8 +11,6 @@ import javax.inject.Inject;
  * Created by ganitzsh on 1/27/17.
  */
 public class CTCheck implements Filter {
-
-
     @Override
     public Result filter(FilterChain filterChain, Context context) {
         Result result;
