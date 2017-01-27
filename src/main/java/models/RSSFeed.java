@@ -1,15 +1,11 @@
 package models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 @Entity(name = "feeds")
-//@JsonInclude(JsonInclude.Include.NON_ABSENT)
-public class RSSFeed {
+public class RSSFeed implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;

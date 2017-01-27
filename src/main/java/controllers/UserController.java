@@ -4,8 +4,12 @@ import com.google.inject.Singleton;
 import com.rometools.rome.feed.synd.*;
 import com.rometools.rome.io.SyndFeedInput;
 import filters.AddCORS;
+import filters.AuthCheck;
 import filters.CORSFilter;
+import filters.CTCheck;
+import models.Category;
 import ninja.FilterWith;
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import rss.Author;
 import rss.Content;
 import rss.Feed;
@@ -26,95 +30,92 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.persistence.EntityManager;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Singleton
-@FilterWith(AddCORS.class)
+@FilterWith({
+        AuthCheck.class,
+        AddCORS.class
+})
 public class UserController {
     @Inject
     Provider<EntityManager> entitiyManagerProvider;
     @Inject
     NinjaCache ninjaCache;
 
-
     @UnitOfWork
-    public Result update(Context context, Session session, User updatedUser) {
-        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.text().status(401).render(context.getCookieValue("token"));
-        }
+    @FilterWith(CTCheck.class)
+    public Result update(Session session, User updatedUser) {
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
 
-        User currentUser = em.find(User.class, id);
-        if (currentUser == null) {
-            return Results.status(400);
-        }
-
-        em.getTransaction().begin();
-        currentUser.setEmail(updatedUser.getEmail() == null ? currentUser.getEmail() : updatedUser.getEmail());
-        currentUser.setFirstName(updatedUser.getFirstName() == null ? currentUser.getFirstName() : updatedUser.getFirstName());
-        currentUser.setLastName(updatedUser.getLastName() == null ? currentUser.getLastName() : updatedUser.getLastName());
-        currentUser.setUsername(updatedUser.getUsername() == null ? currentUser.getUsername() : updatedUser.getUsername());
-        currentUser.setPassword(updatedUser.getPassword() == null ? currentUser.getPassword() : updatedUser.getPassword());
-        em.getTransaction().commit();
-        return Results.json().render(currentUser);
-    }
-
-    @UnitOfWork
-    public Result addFeed(Context context, Session session, RSSFeed feed) {
-        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.text().status(401);
-        }
-        EntityManager em = entitiyManagerProvider.get();
-        Long id = (Long) ninjaCache.get(session.get("token"));
-
-        feed.setOwner_id(id);
-        em.getTransaction().begin();
-        em.persist(feed);
-        em.getTransaction().commit();
-        return Results.json().render(feed);
-    }
-
-    @UnitOfWork
-    public Result getAllFeed(Context context, Session session) {
-        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.text().status(401);
-        }
-        EntityManager em = entitiyManagerProvider.get();
-        Long id = (Long) ninjaCache.get(session.get("token"));
-
-        em.getTransaction().begin();
-        User u = entitiyManagerProvider.get().find(User.class, id);
-        em.getTransaction().commit();
-        return Results.json().render(u.getFeeds());
-    }
-
-    @UnitOfWork
-    public Result getOneFeed(Context context, Session session, @PathParam("id") Long fId) {
-        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.text().status(401);
-        }
-        EntityManager em = entitiyManagerProvider.get();
-        Long id = (Long) ninjaCache.get(session.get("token"));
-
-        RSSFeed selection = em.find(RSSFeed.class, fId);
-        if (selection == null) {
-            return Results.status(400);
-        }
         try {
+            User currentUser = em.find(User.class, id);
+
+            em.getTransaction().begin();
+            currentUser.setEmail(updatedUser.getEmail() == null ? currentUser.getEmail() : updatedUser.getEmail());
+            currentUser.setFirstName(updatedUser.getFirstName() == null ? currentUser.getFirstName() : updatedUser.getFirstName());
+            currentUser.setLastName(updatedUser.getLastName() == null ? currentUser.getLastName() : updatedUser.getLastName());
+            currentUser.setUsername(updatedUser.getUsername() == null ? currentUser.getUsername() : updatedUser.getUsername());
+            currentUser.setPassword(updatedUser.getPassword() == null ? currentUser.getPassword() : updatedUser.getPassword());
+            em.getTransaction().commit();
+            return Results.json().render(currentUser);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    @FilterWith(CTCheck.class)
+    public Result addFeed(Session session, RSSFeed feed) {
+        EntityManager em = entitiyManagerProvider.get();
+        Long id = (Long) ninjaCache.get(session.get("token"));
+
+        try {
+            feed.setOwner_id(id);
+            em.getTransaction().begin();
+            em.persist(feed);
+            em.getTransaction().commit();
+            return Results.json().render(feed);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result getAllFeed(Session session) {
+        EntityManager em = entitiyManagerProvider.get();
+        Long id = (Long) ninjaCache.get(session.get("token"));
+
+        try {
+            em.getTransaction().begin();
+            User u = entitiyManagerProvider.get().find(User.class, id);
+            em.getTransaction().commit();
+            return Results.json().render(u.getFeeds());
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result getOneFeed(Session session, @PathParam("id") Long fId) {
+        EntityManager em = entitiyManagerProvider.get();
+        String feedURL = null;
+
+        try {
+            RSSFeed selection = em.find(RSSFeed.class, fId);
             Feed feed;
 
-            String state = (String) ninjaCache.get("feed:" + selection.getUrl() + ":state");
+            feedURL = selection.getUrl();
+            String state = (String) ninjaCache.get("feed:" + feedURL + ":state");
             if (state != null) {
                 if (state.equals("in_progress")) {
                     return Results.text().status(429);
                 }
-                if ((feed = (Feed) ninjaCache.get("feed:" + selection.getUrl())) != null) {
+                if ((feed = (Feed) ninjaCache.get("feed:" + feedURL)) != null) {
                     long seconds = (new Date().getTime()-feed.getCachedDate().getTime())/1000;
                     System.out.println("Time till last caching: " + seconds);
                     if (seconds < 60) {
@@ -122,10 +123,10 @@ public class UserController {
                     }
                 }
             }
-            ninjaCache.set("feed:" + selection.getUrl() + ":state", "in_progress");
+            ninjaCache.set("feed:" + feedURL + ":state", "in_progress");
             feed = new Feed();
             StringBuilder result = new StringBuilder();
-            URL url = new URL(selection.getUrl());
+            URL url = new URL(feedURL);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("User-Agent", "RSS Agg 0.2");
             conn.setRequestMethod("GET");
@@ -143,8 +144,6 @@ public class UserController {
             SyndFeedInput input = new SyndFeedInput();
             SyndFeed f = input.build(source);
 
-            List<SyndEntry> entries = f.getEntries();
-            Iterator<SyndEntry> it = entries.iterator();
             feed.setUri(f.getUri());
             feed.setCopyright(f.getCopyright());
             feed.setDocs(f.getDocs());
@@ -175,6 +174,8 @@ public class UserController {
                 SyndLink link = (SyndLink) linksIt.next();
                 feed.getLinks().add(link.getHref());
             }
+            List<SyndEntry> entries = f.getEntries();
+            Iterator<SyndEntry> it = entries.iterator();
             List<Item> items = new ArrayList<>();
             while (it.hasNext()) {
                 SyndEntry entry = it.next();
@@ -224,33 +225,85 @@ public class UserController {
                 feed.getItems().add(item);
             }
             feed.setCachedDate(new Date());
-            ninjaCache.set("feed:" + selection.getUrl(), feed);
-            ninjaCache.set("feed:" + selection.getUrl() + ":state", "done");
+            ninjaCache.set("feed:" + feedURL, feed);
+            ninjaCache.set("feed:" + feedURL + ":state", "done");
             return Results.json().render(feed);
         } catch (Exception e) {
             e.printStackTrace();
-            ninjaCache.set("feed:" + selection.getUrl() + ":state", "error");
-            ninjaCache.set("feed:" + selection.getUrl() + ":exception", e);
+            if (feedURL != null) {
+                ninjaCache.set("feed:" + feedURL + ":state", "error");
+                ninjaCache.set("feed:" + feedURL + ":exception", e);
+            }
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result deleteFeed(Session session, @PathParam("id") Long fId) {
+        EntityManager em = entitiyManagerProvider.get();
+
+        try {
+            RSSFeed feed = em.find(RSSFeed.class, fId);
+            if (feed == null) {
+                return Results.text().status(400);
+            }
+            em.getTransaction().begin();
+            em.remove(feed);
+            em.getTransaction().commit();
+            return this.getAllFeed(session);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    @FilterWith(CTCheck.class)
+    public Result createCategory(Session session, Category category) {
+        EntityManager em = entitiyManagerProvider.get();
+        Long id = (Long) ninjaCache.get(session.get("token"));
+
+        try {
+            category.setOwner_id(id);
+            em.getTransaction().begin();
+            em.persist(category);
+            em.getTransaction().commit();
+            return Results.json().render(category);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result addFeedToCategory(Session session, @PathParam("cat_id") Long cId, @PathParam("feed_id") Long fId) {
+        EntityManager em = entitiyManagerProvider.get();
+
+        try {
+            Category category = em.find(Category.class, cId);
+            RSSFeed feed = em.find(RSSFeed.class, fId);
+
+            if (category.getFeeds() != null) {
+                em.getTransaction().begin();
+                category.getFeeds().add(feed);
+                em.getTransaction().commit();
+            }
+            return Results.json().render(category);
+        } catch (Exception e) {
             return Results.json().status(400).render(e);
         }
     }
 
     @UnitOfWork
-    public Result deleteFeed(Context context, Session session, @PathParam("id") Long fId) {
-        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.text().status(401);
-        }
+    public Result getAllCategory(Session session) {
         EntityManager em = entitiyManagerProvider.get();
         Long id = (Long) ninjaCache.get(session.get("token"));
 
-        RSSFeed feed = em.find(RSSFeed.class, fId);
-        if (feed == null) {
-            return Results.text().status(400);
+        try {
+            em.getTransaction().begin();
+            User u = entitiyManagerProvider.get().find(User.class, id);
+            em.getTransaction().commit();
+            return Results.json().render(u.getCategories());
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
         }
-        em.getTransaction().begin();
-        em.remove(feed);
-        em.getTransaction().commit();
-        return this.getAllFeed(context, session);
     }
-
 }

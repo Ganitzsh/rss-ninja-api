@@ -18,7 +18,9 @@ package controllers;
 
 import com.google.inject.Singleton;
 import filters.AddCORS;
+import filters.AuthCheck;
 import filters.CORSFilter;
+import filters.CTCheck;
 import models.User;
 import models.User_;
 import ninja.*;
@@ -52,6 +54,7 @@ public class AuthController {
     NinjaCache ninjaCache;
 
     @UnitOfWork
+    @FilterWith(CTCheck.class)
     public Result signup(Context context, Session session, @JSR303Validation User u, Validation validation) {
         if (validation.hasBeanViolations()) {
             ArrayList map = new ArrayList();
@@ -59,11 +62,9 @@ public class AuthController {
                 FieldViolation elem = i.next();
                 map.add(elem.field + " " + elem.constraintViolation.getMessageKey());
             }
-            return Results.json().status(400).render(map);
+            return Results.json().status(400).render(new JSendResp(400, map));
         }
-        if (u == null) {
-            return Results.json().status(400).render("No user specified");
-        }
+
         try {
             EntityManager entitymanager = entitiyManagerProvider.get();
             entitymanager.getTransaction().begin();
@@ -77,17 +78,16 @@ public class AuthController {
             session.put("id", String.valueOf(u.getId()));
             return Results.json().render(new RespAuth(u.getId(), token));
         } catch (Exception e) {
-            return Results.json().status(400).render(e);
+            return Results.json().status(400).render(new JSendResp(400, e));
         }
     }
 
     @UnitOfWork
+    @FilterWith(CTCheck.class)
     public Result login(Context context, Session session, User req) {
         EntityManager entitymanager = entitiyManagerProvider.get();
         CriteriaBuilder cb = entitymanager.getCriteriaBuilder();
-        if (req == null || req.getEmail() == null || req.getPassword() == null) {
-            return Results.json().render("Req is null");
-        }
+
         try {
             CriteriaQuery<User> query = cb.createQuery(User.class);
             Root<User> a = query.from(User.class);
@@ -104,7 +104,7 @@ public class AuthController {
             ninjaCache.set(token, u.getId());
             return Results.json().render(new RespAuth(u.getId(), token));
         } catch (Exception e) {
-            return Results.json().status(400).render(e);
+            return Results.json().status(400).render(new JSendResp(400, e));
         }
     }
 
@@ -120,12 +120,11 @@ public class AuthController {
     }
 
     @UnitOfWork
-    public Result ping(Context context, Session session) {
-        System.out.println(context.getCookieValue("token"));
-        if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
-            return Results.json().status(401);
-        }
-        return Results.text().status(200);
+    @FilterWith(AuthCheck.class)
+    public Result check(Context context) {
+        String token = context.getCookieValue("token");
+        Long id = (Long) ninjaCache.get(token);
+        return Results.json().render(new RespAuth(id, token));
     }
 
     public class RespAuth {
@@ -138,5 +137,3 @@ public class AuthController {
         }
     }
 }
-
-

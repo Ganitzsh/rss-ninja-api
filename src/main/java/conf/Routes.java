@@ -34,13 +34,17 @@ public class Routes implements ApplicationRoutes {
         router.POST().route("/auth/login").with(AuthController.class, "login");
         router.POST().route("/auth/logout").with(AuthController.class, "logout");
 
-        router.GET().route("/auth/check").with(AuthController.class, "ping");
+        router.GET().route("/auth/check").with(AuthController.class, "check");
 
         router.METHOD("PATCH").route("/me").with(UserController.class, "update");
         router.GET().route("/me/feeds").with(UserController.class, "getAllFeed");
         router.PUT().route("/me/feeds").with(UserController.class, "addFeed");
         router.DELETE().route("/me/feeds/{id}").with(UserController.class, "deleteFeed");
         router.GET().route("/me/feeds/{id}").with(UserController.class, "getOneFeed");
+
+        router.GET().route("/me/categories").with(UserController.class, "getAllCategory");
+        router.POST().route("/me/categories").with(UserController.class, "createCategory");
+        router.PUT().route("/me/categories/{cat_id}/feed/{feed_id}").with(UserController.class, "addFeedToCategory");
     }
 
 }

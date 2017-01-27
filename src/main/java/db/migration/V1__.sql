@@ -17,4 +17,18 @@ CREATE TABLE "public"."feeds" (
   PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."categories" (
+  "id" serial,
+  "name" varchar(60),
+  "color" varchar(6),
+  "owner_id" int NOT NULL REFERENCES "users",
+  PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."category_feed" (
+  "cat_id" int NOT NULL REFERENCES "categories",
+  "feed_id" int NOT NULL REFERENCES "feeds"
+);
+CREATE UNIQUE INDEX category_feed_pkey ON category_feed USING btree (cat_id, feed_id);
+
 create sequence hibernate_sequence;

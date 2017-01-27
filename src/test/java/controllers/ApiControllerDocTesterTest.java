@@ -17,46 +17,60 @@
 package controllers;
 
 
+import models.User;
 import org.junit.Test;
 
 import ninja.NinjaDocTester;
 import org.doctester.testbrowser.Request;
 import org.doctester.testbrowser.Response;
-import org.hamcrest.CoreMatchers;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class ApiControllerDocTesterTest extends NinjaDocTester {
-    
-    String URL_INDEX = "/";
-    String URL_HELLO_WORLD_JSON = "/hello_world.json";
-    
+
+    String URL_SIGNUP = "/auth/signup";
+    String URL_LOGIN = "/auth/login";
+    String URL_LOGOUT = "/auth/logout";
+    String URL_CHECK = "/auth/check";
+
     @Test
-    public void testGetIndex() {
-    
-        Response response = makeRequest(
-                Request.GET().url(
-                        testServerUrl().path(URL_INDEX)));
+    public void testLogin() {
 
-        assertThat(response.payload, containsString("Hello World!"));
-        assertThat(response.payload, containsString("BAM!"));
+        User u = new User();
+        u.setEmail("test@email.com");
+        u.setPassword("12345");
+        Request reqFailed = Request
+                .POST()
+                .contentTypeApplicationJson()
+                .payload(u)
+                .url(testServerUrl().path(URL_LOGIN));
 
+        Response response = makeRequest(reqFailed);
 
+        assertEquals(400, response.httpStatus);
     }
-    
-    @Test
-    public void testGetHelloWorldJson() {
-    
-        Response response = makeRequest(
-                Request.GET().url(
-                        testServerUrl().path(URL_HELLO_WORLD_JSON)));
-//
-//        ApplicationController.SimplePojo simplePojo
-//                = response.payloadJsonAs(ApplicationController.SimplePojo.class);
-//
-//        assertThat(simplePojo.content, CoreMatchers.equalTo("Hello World! Hello Json!"));
 
-    
+    @Test
+    public void testLogout() {
+
+        Request req = Request
+                .POST()
+                .url(testServerUrl().path(URL_LOGOUT));
+
+        Response response = makeRequest(req);
+
+        assertEquals(200, response.httpStatus);
+    }
+
+    @Test
+    public void testAuthCheck() {
+
+        Request req = Request
+                .GET()
+                .url(testServerUrl().path(URL_CHECK));
+
+        Response response = makeRequest(req);
+
+        assertEquals(401, response.httpStatus);
     }
 
 }
