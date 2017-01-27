@@ -15,4 +15,8 @@ public class AppController {
     public Result cors() {
         return Results.json();
     }
+
+    public Result index() {
+        return Results.html();
+    }
 }

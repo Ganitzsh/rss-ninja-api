@@ -49,8 +49,8 @@ public class User implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(fetch=FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name="owner_id")
-
     private List<Category> categories;
+
 
     public User() {
     }

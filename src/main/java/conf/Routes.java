@@ -20,6 +20,7 @@ package conf;
 import controllers.AppController;
 import controllers.AuthController;
 import controllers.UserController;
+import ninja.AssetsController;
 import ninja.Router;
 import ninja.application.ApplicationRoutes;
 
@@ -29,6 +30,8 @@ public class Routes implements ApplicationRoutes {
     public void init(Router router) {
 
         router.OPTIONS().route("/.*").with(AppController.class, "cors");
+        router.GET().route("/assets/{fileName: .*}").with(AssetsController.class, "serveStatic");
+        router.GET().route("/").with(AppController.class, "index");
 
         router.POST().route("/auth/signup").with(AuthController.class, "signup");
         router.POST().route("/auth/login").with(AuthController.class, "login");
