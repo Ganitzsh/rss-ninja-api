@@ -116,7 +116,7 @@ public class AuthController {
             ninjaCache.delete(c.getValue());
         }
         session.clear();
-        return Results.noContent().status(200);
+        return Results.text().status(200);
     }
 
     @UnitOfWork
@@ -125,7 +125,7 @@ public class AuthController {
         if (!TokenAuthority.isValid(context.getCookieValue("token"), ninjaCache)) {
             return Results.json().status(401);
         }
-        return Results.noContent().status(200);
+        return Results.text().status(200);
     }
 
     public class RespAuth {
