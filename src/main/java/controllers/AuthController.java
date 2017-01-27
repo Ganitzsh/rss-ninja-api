@@ -26,6 +26,7 @@ import models.User_;
 import ninja.*;
 import ninja.cache.NinjaCache;
 import ninja.jpa.UnitOfWork;
+import ninja.params.Param;
 import ninja.session.Session;
 import ninja.validation.FieldViolation;
 import ninja.validation.JSR303Validation;
@@ -121,15 +122,22 @@ public class AuthController {
 
     @UnitOfWork
     @FilterWith(AuthCheck.class)
-    public Result check(Context context) {
+    public Result check(Context context, Session session) {
         String token = context.getCookieValue("token");
         Long id = (Long) ninjaCache.get(token);
-        return Results.json().render(new RespAuth(id, token));
+        return Results.json().render(new RespAuth(id, token, session.get("email")));
     }
 
     public class RespAuth {
         public Long id;
         public String token;
+        public String email;
+
+        public RespAuth(Long id, String token, String email) {
+            this.id = id;
+            this.token = token;
+            this.email = email;
+        }
 
         public RespAuth(Long id, String token) {
             this.id = id;
