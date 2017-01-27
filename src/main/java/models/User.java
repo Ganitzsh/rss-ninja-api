@@ -38,21 +38,33 @@ public class User implements Serializable {
     @JoinColumn(name="owner_id")
     private List<RSSFeed> feeds;
 
-    public List<Category> getCategories() {
-        return categories;
-    }
-
-    public void setCategories(List<Category> categories) {
-        this.categories = categories;
-    }
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name="owner_id")
+    private List<ItemJSON> starred;
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(fetch=FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name="owner_id")
     private List<Category> categories;
 
-
     public User() {
+    }
+
+    public List<ItemJSON> getStarred() {
+        return starred;
+    }
+
+    public void setStarred(List<ItemJSON> starred) {
+        this.starred = starred;
+    }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
     }
 
     public String getUsername() {

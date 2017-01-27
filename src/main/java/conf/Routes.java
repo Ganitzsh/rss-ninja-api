@@ -40,6 +40,10 @@ public class Routes implements ApplicationRoutes {
 
         router.GET().route("/auth/check").with(AuthController.class, "check");
 
+        router.POST().route("/me/starred").with(UserController.class, "starItem");
+        router.GET().route("/me/starred").with(UserController.class, "getAllStarredItem");
+        router.DELETE().route("/me/starred/{id}").with(UserController.class, "deleteStaredItem");
+
         router.METHOD("PATCH").route("/me").with(UserController.class, "update");
         router.GET().route("/me/feeds").with(UserController.class, "getAllFeed");
         router.PUT().route("/me/feeds").with(UserController.class, "addFeed");

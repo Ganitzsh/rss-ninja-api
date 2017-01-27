@@ -1,5 +1,6 @@
 package controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Singleton;
 import com.rometools.rome.feed.synd.*;
 import com.rometools.rome.io.SyndFeedInput;
@@ -8,6 +9,7 @@ import filters.AuthCheck;
 import filters.CORSFilter;
 import filters.CTCheck;
 import models.Category;
+import models.ItemJSON;
 import ninja.FilterWith;
 import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import rss.Author;
@@ -244,9 +246,6 @@ public class UserController {
 
         try {
             RSSFeed feed = em.find(RSSFeed.class, fId);
-            if (feed == null) {
-                return Results.text().status(400);
-            }
             em.getTransaction().begin();
             em.remove(feed);
             em.getTransaction().commit();
@@ -288,7 +287,7 @@ public class UserController {
             }
             return Results.json().render(category);
         } catch (Exception e) {
-            return Results.json().status(400).render(e);
+            return Results.json().status(400).render(new JSendResp(400, e));
         }
     }
 
@@ -302,6 +301,82 @@ public class UserController {
             User u = entitiyManagerProvider.get().find(User.class, id);
             em.getTransaction().commit();
             return Results.json().render(u.getCategories());
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result starItem(Session session, Item item) {
+        EntityManager em = entitiyManagerProvider.get();
+        Long id = (Long) ninjaCache.get(session.get("token"));
+
+        try {
+            ItemJSON itemJSON = new ItemJSON();
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonInString = mapper.writeValueAsString(item);
+            itemJSON.setContent(jsonInString);
+            itemJSON.setLink(item.getLink());
+            itemJSON.setOwner_id(id);
+            em.getTransaction().begin();
+            em.persist(itemJSON);
+            em.getTransaction().commit();
+            return Results.json().render(item);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result getOneStarredItem(Session session, @PathParam("id") Long iid) {
+        EntityManager em = entitiyManagerProvider.get();
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ItemJSON itemJSON = em.find(ItemJSON.class, iid);
+            Item item = mapper.readValue(itemJSON.getContent(), Item.class);
+            item.setId(itemJSON.getId().toString());
+            return Results.json().render(item);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result getAllStarredItem(Session session) {
+        EntityManager em = entitiyManagerProvider.get();
+        Long id = (Long) ninjaCache.get(session.get("token"));
+
+        try {
+            em.getTransaction().begin();
+            User u = entitiyManagerProvider.get().find(User.class, id);
+            em.getTransaction().commit();
+            List<Item> ret = new ArrayList<>();
+            List<ItemJSON> itemJSON = u.getStarred();
+            Iterator<ItemJSON> it = itemJSON.iterator();
+            while (it.hasNext()) {
+                ItemJSON i = it.next();
+                ObjectMapper mapper = new ObjectMapper();
+                Item item = mapper.readValue(i.getContent(), Item.class);
+                item.setId(i.getId().toString());
+                ret.add(item);
+            }
+            return Results.json().render(ret);
+        } catch (Exception e) {
+            return Results.json().status(400).render(new JSendResp(400, e));
+        }
+    }
+
+    @UnitOfWork
+    public Result deleteStaredItem(Session session, @PathParam("id") Long id) {
+        EntityManager em = entitiyManagerProvider.get();
+
+        try {
+            ItemJSON item = em.find(ItemJSON.class, id);
+            em.getTransaction().begin();
+            em.remove(item);
+            em.getTransaction().commit();
+            return this.getAllStarredItem(session);
         } catch (Exception e) {
             return Results.json().status(400).render(new JSendResp(400, e));
         }
