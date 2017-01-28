@@ -77,7 +77,7 @@ public class AuthController {
             session.put("token", token);
             session.put("email", u.getEmail());
             session.put("id", String.valueOf(u.getId()));
-            return Results.json().render(new RespAuth(u.getId(), token));
+            return Results.json().render(new RespAuth(u.getId(), token, u.getEmail()));
         } catch (Exception e) {
             return Results.json().status(400).render(new JSendResp(400, e));
         }
@@ -103,7 +103,7 @@ public class AuthController {
             session.put("email", u.getEmail());
             session.put("id", String.valueOf(u.getId()));
             ninjaCache.set(token, u.getId());
-            return Results.json().render(new RespAuth(u.getId(), token));
+            return Results.json().render(new RespAuth(u.getId(), token, u.getEmail()));
         } catch (Exception e) {
             return Results.json().status(400).render(new JSendResp(400, e));
         }
