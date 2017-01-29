@@ -321,7 +321,7 @@ public class UserController {
             em.getTransaction().begin();
             em.persist(itemJSON);
             em.getTransaction().commit();
-            itemJSON.setId(Long.valueOf(item.getId()));
+            item.setId(String.valueOf(itemJSON.getId()));
             return Results.json().render(item);
         } catch (Exception e) {
             return Results.json().status(400).render(new JSendResp(400, e));
