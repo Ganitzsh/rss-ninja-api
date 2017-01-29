@@ -13,8 +13,6 @@ import javax.inject.Inject;
 public class CTCheck implements Filter {
     @Override
     public Result filter(FilterChain filterChain, Context context) {
-        Result result;
-
         if (!context.isRequestJson()) {
             return Results.unauthorized().json().render(new JSendResp(401, new SimpleError("Check your Content-Type, only application/json or application/xml allowed")));
         }

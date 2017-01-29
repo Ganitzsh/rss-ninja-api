@@ -122,4 +122,9 @@ public class User implements Serializable {
     public void setFeeds(List<RSSFeed> feeds) {
         this.feeds = feeds;
     }
+
+    @Override
+    public String toString() {
+        return "Email: " + this.email + " Password: " + this.password;
+    }
 }

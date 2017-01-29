@@ -2,6 +2,8 @@ package filters;
 
 import ninja.*;
 
+import java.util.Iterator;
+
 /**
  * Created by ganitzsh on 1/26/17.
  */

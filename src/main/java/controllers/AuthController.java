@@ -24,6 +24,7 @@ import filters.CTCheck;
 import models.User;
 import models.User_;
 import ninja.*;
+import ninja.bodyparser.BodyParserEngineJson;
 import ninja.cache.NinjaCache;
 import ninja.jpa.UnitOfWork;
 import ninja.params.Param;
@@ -31,6 +32,7 @@ import ninja.session.Session;
 import ninja.validation.FieldViolation;
 import ninja.validation.JSR303Validation;
 import ninja.validation.Validation;
+import org.apache.commons.io.IOUtils;
 import tools.SessionIdentifierGenerator;
 import tools.TokenAuthority;
 
@@ -42,7 +44,9 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 
 @Singleton
@@ -105,6 +109,7 @@ public class AuthController {
             ninjaCache.set(token, u.getId());
             return Results.json().render(new RespAuth(u.getId(), token, u.getEmail()));
         } catch (Exception e) {
+            e.printStackTrace();
             return Results.json().status(400).render(new JSendResp(400, e));
         }
     }
@@ -117,7 +122,9 @@ public class AuthController {
             ninjaCache.delete(c.getValue());
         }
         session.clear();
-        return Results.text().status(200);
+        Map<String, Object> ret = new HashMap<>();
+        ret.put("message", "Successfully logged out");
+        return Results.json().render(new JSendResp(200, ret));
     }
 
     @UnitOfWork
